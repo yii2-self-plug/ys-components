@@ -1,0 +1,24 @@
+{
+    "name": "yuanshuai/ys-components",
+    "authors": [
+        {
+            "name": "helong",
+            "email": "yuanshuai@mybns.cn"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+    	"aliyuncs/oss-sdk-php": "^2.0",
+		"php-amqplib/php-amqplib": "2.6.*",
+        "yiisoft/yii2-httpclient": "~2.0.0",
+        "npm-asset/ueditor":"*",
+        "bower-asset/webuploader_fex":"*",
+        "bower-asset/cropper":"*",
+        
+    },
+    "autoload": {
+        "psr-4": {
+            "yuanshuai\\yscomponents\\": ""
+        }
+    }
+}
