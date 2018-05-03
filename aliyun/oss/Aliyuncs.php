@@ -5,7 +5,7 @@ use yii\base\Component;
 * 阿里云OSS接口对接文件
 */
 
-require_once(dirname(dirname(dirname(dirname(__FILE__)))).'/aliyuncs/oss-sdk-php/autoload.php');
+require_once(YII2_PATH.'/../../aliyuncs/oss-sdk-php/autoload.php');
 use OSS\OssClient;
 use OSS\Core\OssException;
 use OSS\Model\PrefixInfo;
@@ -15,7 +15,11 @@ class Aliyuncs extends Component
 	public $isCName = false;
 	public $securityToken = null;
 	public $error = null;
+	public $cdn = "";
 
+    /**
+     * @var OssClient $ossClient
+     */
 	private $ossClient;
 	public function init(){
 		try {
@@ -80,8 +84,14 @@ class Aliyuncs extends Component
 	 */
 	public function getPrefixInfo($object,$prefix){
 		$prefixInfo = new PrefixInfo($object->getKey());
-		return $prefixInfo;
+		return $prefixInfo->getPrefix();
 	}
+
+    /**
+     * 上传文件
+     * @param $options
+     * @return mixed
+     */
 	public function uploadFile($options){
 		return $this->ossClient->uploadFile($this->getParam($this->config,'bucket'), $options['object'], $options['filepath']);
 	}

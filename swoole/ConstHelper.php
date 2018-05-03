@@ -6,7 +6,7 @@
  * Time: 16:18
  */
 
-namespace yuanshuai\yscomponents;
+namespace yuanshuai\yscomponents\swoole;
 
 
 class ConstHelper

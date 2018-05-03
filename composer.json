@@ -13,7 +13,8 @@
         "yiisoft/yii2-httpclient": "~2.0.0",
         "npm-asset/ueditor":"*",
         "bower-asset/webuploader_fex":"*",
-        "bower-asset/cropper":"*"
+        "bower-asset/cropper":"*",
+        "hightman/xunsearch":"*"
     },
     "autoload": {
         "psr-4": {

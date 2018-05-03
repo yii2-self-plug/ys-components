@@ -6,11 +6,11 @@
  * Time: 16:29
  */
 
-namespace yuanshuai\swoole\console;
+namespace yuanshuai\yscomponents\swoole\console;
 
 
 use yii\console\Controller;
-use yuanshuai\swoole\ConstHelper;
+use yuanshuai\yscomponents\swoole\ConstHelper;
 
 class WebSocketController extends Controller
 {
@@ -29,7 +29,8 @@ class WebSocketController extends Controller
         $server->setFunction("open",[$this,"open"])
             ->setFunction("message",[$this,"message"])
             ->setFunction("close",[$this,"close"])
-            ->setFunction("request",[$this,"request"]);
+            ->setFunction("request",[$this,"request"])
+            ->setFunction("push",[$this,"push"]);
         return $server;
     }
 
@@ -60,6 +61,15 @@ class WebSocketController extends Controller
      * @param $response
      */
     protected function request($request, $response){}
+
+    /**
+     * 推送消息
+     * @param $fd 接收消息的客户端
+     * @param $data
+     * @param bool $binary_data
+     * @param bool $finish
+     */
+    protected function push($fd, $data, $binary_data = false, $finish = true){}
 
     /**
      * 设置配置文件中的配置项，默认为websocket

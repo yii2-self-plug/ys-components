@@ -6,24 +6,29 @@
  * Time: 16:52
  */
 
-namespace yuanshuai\yscomponents\client;
+namespace yuanshuai\yscomponents\swoole\client;
 
 use yii\helpers\ArrayHelper;
+use yii\helpers\Inflector;
 use yii\helpers\Json;
-use yuanshuai\swoole\ConstHelper;
+use yuanshuai\yscomponents\swoole\ConstHelper;
 
 class Client
 {
     private $client;
     private $data = [];
+    //对应服务端的controller
+    private $group;
+    private $dataSouce;
     private $config = [
         'host'=>ConstHelper::CONFIG_HOST,
         'port'=>ConstHelper::CONFIG_PORT,
-        'pidfile'=>ConstHelper::CONFIG_PID_FILE,
         'client_timeout'=>ConstHelper::CONFIG_CLIENT_TIMEOUT,
     ];
-    public function __construct()
+    public function __construct($group = "default",$dataSouce = "mysql")
     {
+        $this->group = $group;
+        $this->dataSouce = $dataSouce;
         $this->setConfig();
         $this->client = new \swoole_client(SWOOLE_SOCK_TCP);
         $this->connect();
@@ -33,17 +38,11 @@ class Client
      * 配置
      */
     protected function setConfig(){
-        if (isset(\Yii::$app->params[$this->className()])){
-            $this->config = \Yii::$app->params[$this->className()];
+        if (isset(\Yii::$app->params["serverClient"][$this->group])){
+            $this->config = ArrayHelper::merge($this->config,\Yii::$app->params["serverClient"][$this->group]);
+        }else{
+            $this->config = ArrayHelper::merge($this->config,\Yii::$app->params["serverClient"]["default"]);
         }
-    }
-
-    /**
-     * 服务端路由,也是params的配置项
-     * @return string
-     */
-    protected function className(){
-        return "Client";
     }
 
     /**
@@ -54,10 +53,10 @@ class Client
      */
     public function __call($name, $arguments)
     {
-        $className = $this->className();
-        $route = $this->getRoute($className,$name);
+        $route = $this->getRoute($this->group,$name);
+        $arguments[0]["dataSouce"] = $this->dataSouce;
         $this->data = ArrayHelper::merge(['route'=>$route],["params"=>$arguments]);
-        return $this;
+        return $this->tcp();
     }
 
     /**
@@ -96,22 +95,9 @@ class Client
      * @return string
      */
     private function getRoute($className,$action){
-        $controller = $this->foramtRoute($className);
-        $action = $this->foramtRoute($action);
+        $controller = Inflector::camel2id($className);
+        $action = Inflector::camel2id($action);
         return "{$controller}/{$action}";
-    }
-
-    /**
-     * 格式化路由
-     * @param $name
-     * @return mixed
-     */
-    private function foramtRoute($name){
-        $name = lcfirst($name);
-        $str = preg_replace_callback('/([A-Z]{1})/',function($matches){
-            return '-'.strtolower($matches[0]);
-        },$name);
-        return $str;
     }
 
     /*
@@ -129,6 +115,11 @@ class Client
      */
     private function send(){
         $this->client->send(Json::encode($this->data));
-        return $this->client->recv();
+        $result = $this->client->recv();
+        $result = Json::decode($result);
+        if ($result["code"] === 1) {
+            return $result["data"];
+        }
+        return false;
     }
 }

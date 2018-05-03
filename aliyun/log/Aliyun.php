@@ -57,7 +57,7 @@
 		 */
 		public function deleteLogstore($project=null,$logstroe=null){
 			if ($project) $this->project = $project;
-			if ($logstore) $this->logstore = $logstore;
+			if ($logstroe) $this->logstore = $logstroe;
 			$model = new Aliyun_Log_Models_DeleteLogstoreRequest($this->project,$this->logstore);
 			return $this->client->deleteLogstore($model);
 		}

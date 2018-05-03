@@ -6,7 +6,7 @@
  * Time: 15:38
  */
 
-namespace yuanshuai\yscomponents\server;
+namespace yuanshuai\yscomponents\swoole\server;
 
 
 use yii\helpers\ArrayHelper;
@@ -14,6 +14,9 @@ use yii\helpers\ArrayHelper;
 class WebSocket
 {
     public $config = [];
+    /**
+     * @var \swoole_websocket_server $websocket
+     */
     private $websocket;
     private $app;
 
@@ -57,5 +60,16 @@ class WebSocket
 
     public function onRequest($request, $response){
 
+    }
+    /**
+     * 向某个WebSocket客户端连接推送数据
+     * @param      $fd
+     * @param      $data
+     * @param bool $binary_data
+     * @param bool $finish
+     */
+    public function push($fd, $data, $binary_data = false, $finish = true)
+    {
+        return $this->websocket->push($fd,$data,$binary_data,$finish);
     }
 }

@@ -13,8 +13,9 @@
 		public $options;
 		public $cropperOption;
 		public $value;
+		public $imageUrl;
 		public $boxid = 'packerImage';
-		public $key;
+		public $viewPath = "@vendor/yuanshuai/ys-components/webuploader/views";
 		public function init(){
 			parent::init();
 			if (!$this->server) {
@@ -27,14 +28,15 @@
 				'width'=>200,
 				'height'=>200
 			);
+            $accept =Json::encode([
+                'title'=>'Image',
+                'extensions'=>'gif,jpg,jpeg,bmp,png',
+                'mimeTypes'=>'image/gif,image/jpeg,image/png,image/jpg,image/bmp'
+            ]);
 			$options = array(
 				'auto'=>'false',
 				'multiple'=>'true',
-				'accept'=>Json::encode(array(
-					'title'=>'Image',
-					'extensions'=>'gif,jpg,jpeg,bmp,png',
-					'mimeTypes'=>'image/*'
-				)),
+				'accept'=>$accept,
 			);
 			if (!$this->options) {
 				$this->options = $options;
@@ -50,10 +52,17 @@
 				$this->value = '';
 			}
 			if ($this->hasModel()) {
-				$this->name = Html::getInputName($this->model,$this->attribute);
+			    if (!$this->name){
+                    $this->name = Html::getInputName($this->model,$this->attribute);
+                }
 				$this->value = Html::getAttributeValue($this->model, $this->attribute);
 			}
-			$this->key = md5($this->name);
+            if (!$this->imageUrl) {
+                $this->imageUrl = $this->value;
+            }
+            if ($this->imageUrl instanceof \Closure) {
+			    $this->imageUrl = ($this->imageUrl)();
+            }
 		}
 
 		public function run(){
@@ -64,13 +73,14 @@
 				$assetArray[$key]=$value::register($view);
 			}
 			$assetArray['ysWebuploader'] = $asset;
-			return $this->render('upload',array(
-				'key'=>$this->key,
+			return $this->render($this->viewPath.'/upload',array(
+				'key'=>$this->id,
 				'view'=>$view,
 				'asset'=>$assetArray,
 				'server'=>$this->server,
 				'name'=>$this->name,
 				'value'=>$this->value,
+				'imageUrl'=>$this->imageUrl,
 				'boxid'=>$this->boxid,
 				'options'=>$this->options,
 				'cropperServer'=>$this->cropperServer,

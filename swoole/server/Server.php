@@ -6,11 +6,11 @@
  * Time: 17:21
  */
 
-namespace yuanshuai\yscomponents\server;
+namespace yuanshuai\yscomponents\swoole\server;
 
 
 use yii\helpers\Json;
-use yuanshuai\swoole\ConstHelper;
+use yuanshuai\yscomponents\swoole\ConstHelper;
 
 class Server
 {

@@ -7,42 +7,95 @@
  */
 
 namespace yuanshuai\yscomponents\amqp;
+use Imagine\Image\Point;
+use yii\base\Component;
+use yii\base\Exception;
 use yii\helpers\Json;
+use yii\helpers\StringHelper;
 
 /**
  * 任务基类
  * Class Job
  * @package yuanshuai\amqp
  */
-class Job
+class Job extends Component
 {
     private $amqp;
-    public function __construct()
+    private $_attributes = [];
+    public function init()
     {
-        $this->amqp = self::setAmqp();
+        $this->amqp = $this->setAmqp();
     }
 
     /**
      * 设置rabbitmq
      * @return mixed
      */
-    public static function setAmqp(){
+    public function setAmqp(){
         return \Yii::$app->amqp;
     }
 
     /**
-     * 返回类名，将类名作为队列名称
+     * 返回转发器名称，当为广播消息时，注意不要和QNAME相同
      * @return string
      */
-    public static function jobName(){
-        return get_called_class();
+    public function getEName(){
+        return $this->getQName();
+    }
+
+    /**
+     * 返回队列名称
+     * @return string
+     */
+    public function getQName()
+    {
+        return StringHelper::basename(get_called_class());
     }
 
     /**
      * 发送队列消息
-     * @param $message
      */
-    public function send($message){
-        $this->amqp->send($message,["qname"=>self::jobName()]);
+    public function send()
+    {
+        $message = Json::encode($this->getAttributes());
+        $this->amqp->send($message,["qname"=>$this->getQName(),"ename"=>$this->getQName()]);
+    }
+
+    public function __get($name)
+    {
+        return $this->getAttribute($name);
+    }
+
+    public function __set($name, $value)
+    {
+        $this->_attributes[$name] = $value;
+    }
+
+    public function getAttribute($name,$value="")
+    {
+        return $this->hasAttribute($name) ? $this->_attributes[$name] : $value;
+    }
+
+    public function hasAttribute($name)
+    {
+        return isset($this->_attributes[$name]);
+    }
+
+    public function getAttributes()
+    {
+        return $this->_attributes;
+    }
+
+    public function setAttributes($arr = [])
+    {
+        if (!is_array($arr)) {
+            throw new Exception("attributes must be array");
+        }
+        $this->_attributes = $arr;
+        foreach ($arr as $key => $value) {
+            if ($this->hasProperty($key)) {
+                $this->$key = $value;
+            }
+        }
     }
 }

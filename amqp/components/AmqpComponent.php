@@ -1,6 +1,7 @@
 <?php 
 	namespace yuanshuai\yscomponents\amqp\components;
-	use PhpAmqpLib\Connection\AMQPStreamConnection;
+	use PhpAmqpLib\Channel\AMQPChannel;
+    use PhpAmqpLib\Connection\AMQPStreamConnection;
     use PhpAmqpLib\Message\AMQPMessage;
     use yii\base\Component;
     use yii\helpers\ArrayHelper;
@@ -12,7 +13,7 @@
 	class AmqpComponent extends Component
 	{
 	    //对外配置文件
-	    public $config = null;
+	    public $config = [];
 
 	    //rabbitmq服务器地址
 	    public $host = '127.0.0.1';
@@ -28,13 +29,13 @@
         public $vhost = '/';
 
 	    //exchange名称
-        public $ename = 'exchange';
+        protected $ename = 'exchange';
 	    //exchange类型
         public $etype = 'direct';
 	    //exchange是否持久化
         public $edurable = false;
 	    //queue名称
-        public $qname = 'queue';
+        protected $qname = 'queue';
 	    //queue是否持久化
         public $qdurable = false;
 	    //公平分配任务时每个消费者每次消费的条数
@@ -48,10 +49,16 @@
 	    //消息是否持久化
         public $mdurable = AMQPMessage::DELIVERY_MODE_NON_PERSISTENT;
 
-	    //rabbitmq连接
-        public $connect;
-	    //rabbitmq通道
-        public $channel;
+	    /**
+         * rabbitmq连接
+         * @var AMQPStreamConnection $connect
+         **/
+        protected $connect;
+	    /**
+	     * rabbitmq通道
+	     * @var AMQPChannel $channel
+	     */
+        protected $channel;
 
         /**
          * 初始化系统系统变量
@@ -73,6 +80,7 @@
          */
         public function set($config = []){
             $this->config = ArrayHelper::merge($this->config,$config);
+            unset($config);
             foreach ($this->config as $key => $value){
                 if (property_exists($this,$key)) {
                     $this->$key = $value;
@@ -81,8 +89,10 @@
             $this->channel = $this->connect->channel();
             $this->channel->basic_qos(null,$this->prefetch_count,null);
             $this->channel->exchange_declare($this->ename,$this->etype,false,$this->edurable,$this->auto_delete);
-            $this->channel->queue_declare($this->qname,false,$this->qdurable,false,$this->auto_delete);
-            $this->channel->queue_bind($this->qname,$this->ename);
+            if ($this->etype != "fanout") {
+                $this->channel->queue_declare($this->qname,false,$this->qdurable,false,$this->auto_delete);
+                $this->channel->queue_bind($this->qname,$this->ename);
+            }
             return $this;
         }
 
@@ -103,6 +113,7 @@
         /**
          * 消费消息
          * @param array $config 额外参数设置
+         * @param $func
          */
         public function get($func = null,$config = []){
             $callBack = [$this,"getCallback"];
@@ -115,10 +126,14 @@
                 }
             }
             $this->set($config);
-            $this->channel->basic_consume($this->qname, $this->consumer_tag, false, false, false, false,function($message) use($callBack){
+            if ($this->etype == "fanout") {
+                $this->channel->queue_declare($this->qname,false,$this->qdurable,false,$this->auto_delete);
+                $this->channel->queue_bind($this->qname,$this->ename);
+            }
+            $this->channel->basic_consume($this->qname, $this->consumer_tag, false, false, false, false,function(AMQPMessage $message) use($callBack){
                 $msg = $message->body;
                 call_user_func($callBack,$msg);
-                $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
+                $message->delivery_info['channel']->basic_nack($message->delivery_info['delivery_tag']);
             });
             register_shutdown_function(function($channel,$connection){
                 $channel->close();
@@ -132,8 +147,7 @@
 
         /**
          * 返回指定消费者的状态，是否挂掉
-         * @param $consumerTag 消费者标签
-         * @param array $config 额外参数设置
+         * @param $connectName 消费者标签
          * @return bool
          */
         public function status($connectName){
@@ -147,8 +161,7 @@
 
         /**
          * 强制停止指定消费者，容易造成消息丢失
-         * @param $consumerTag
-         * @param array $config
+         * @param $connectName
          * @return bool
          */
         public function stop($connectName) {

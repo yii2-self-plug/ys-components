@@ -6,11 +6,11 @@
  * Time: 18:16
  */
 
-namespace yuanshuai\yscomponents\console;
+namespace yuanshuai\yscomponents\swoole\console;
 
 
 use yii\console\Controller;
-use yuanshuai\swoole\ConstHelper;
+use yuanshuai\yscomponents\swoole\ConstHelper;
 
 class SwooleController extends Controller
 {

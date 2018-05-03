@@ -1,6 +1,7 @@
-var upload = function(key,imageEdit){
+var upload = function(key,imageEdit,type){
     this.uploader = {};
     this.state = 'pending';
+    this.type = type;
     this.init = function(options){
         this.uploader = WebUploader.create({
             // 选完文件后，是否自动上传。
@@ -23,14 +24,15 @@ var upload = function(key,imageEdit){
         var _that = this;
         this.uploader.on( 'fileQueued', function( file ) {
             var fileName = file.name;
-            var $li = $(
-                    '<div id="' + file.id + '" class="file-item thumbnail">' +
-                        '<img>' +
-                    '</div>'
-                    ),$img = $li.find('img'),$list = $("#fileList"+key);
-
+            var $li,$img;
+            $li = $(
+                '<div id="' + file.id + '" class="file-item thumbnail">' +
+                '<img>' +
+                '</div>'
+            ),$img = $li.find('img');
+            var $list = $("#fileList"+key);
             var $btns = $('<div id="'+key+'" class="file-panel">' +
-                        '<span class="cancel">删除</span><span class="edit">编辑</span></div>').appendTo( $li );
+                '<span class="cancel">删除</span></div>').appendTo($li);
             // $list为容器jQuery实例
             if (!options.multiple) {
                 $list.empty();
@@ -83,9 +85,9 @@ var upload = function(key,imageEdit){
         });
         // 文件上传成功，给item添加成功class, 用样式标记上传成功。
         this.uploader.on( 'uploadSuccess', function( file , response ) {
-            var inputHtml = '<input type="hidden" class="success" name="'+options.name+'" value="'+response.url+'"/>';
+            var inputHtml = '<input type="hidden" class="success" name="'+options.name+'" value="'+response.data.filepath+'"/>';
             $( '#'+file.id ).addClass('upload-state-done');
-            if (response.state == 'SUCCESS') {
+            if (response.code === 200) {
                 $( '#'+file.id ).append(inputHtml);
             }
         });

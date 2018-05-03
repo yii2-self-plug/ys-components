@@ -7,7 +7,6 @@ var imageEdit = function(key){
 	this.modalName = "#cropperModal"+key;
 	this.img = "#editImage"+key;
 	this.submitBtn = ".submitCorpper"+key;
-	this.alert = "#cropperAlert"+key;
 	this.enlargeBtn = ".cropperEnlarge"+key;
 	this.narrowBtn = ".cropperNarrow"+key;
 	this.rotateSBtn = ".cropperRotate-s"+key;
@@ -51,16 +50,16 @@ var imageEdit = function(key){
 			crop: function(e) {
 			},
 			build:function(){
-				$('body').on('click',this.enlargeBtn,function(){
+				$('body').on('click',_that.enlargeBtn,function(){
 					$(_that.img).cropper('zoom',0.1);
 				});
-				$('body').on('click',this.narrowBtn,function(){
+				$('body').on('click',_that.narrowBtn,function(){
 					$(_that.img).cropper('zoom',-0.1);
 				});
-				$('body').on('click',this.rotateSBtn,function(){
+				$('body').on('click',_that.rotateSBtn,function(){
 					$(_that.img).cropper('rotate',10);
 				});
-				$('body').on('click',this.rotateNBtn,function(){
+				$('body').on('click',_that.rotateNBtn,function(){
 					$(_that.img).cropper('rotate',-10);
 				});
 			}
@@ -77,12 +76,11 @@ var imageEdit = function(key){
 			return false;
 		}
 		$.post(this.cropperServer,data,function(rdata){
-			if (rdata.code == 1) {
+			if (rdata.code === 200) {
 				$('body').off('click',_that.submitBtn);
-				var url = rdata.url;
-				$('#'+_that.file.id).find('.success').val(url);
+				$('#'+_that.file.id).find('.success').val(rdata.data.filepath);
 				var img = $('#'+_that.file.id).find('img');
-				img.attr('src',url);
+				img.attr('src',rdata.data.fileurl);
 				img.css({width:100,height:100});
 				$(_that.modalName).modal('hide');
 			}else{
@@ -91,7 +89,6 @@ var imageEdit = function(key){
 		},'json');
 	}
 	this.showAlert = function(message){
-		$(this.alert).find('.modal-body').html(message);
-		$(this.alert).modal('show');
+		bootbox.alert(message);
 	}
 };
